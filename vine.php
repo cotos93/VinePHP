@@ -29,14 +29,32 @@ Class Vine {
             self::$password = func_get_arg(1);
     }
 
-    public function getKey() {
-    	$username = urlencode(self::$username);
-		$password = urlencode(self::$password);
+    private function _getCurl($params = array()) {
 
-		$postFields = "username=$username&password=$password"; 
+    	$url = $params["url"];
+    	$key = $params["key"];
 
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, $this->_baseURL.'/users/authenticate');
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_USERAGENT, "com.vine.iphone/1.0.3 (unknown, iPhone OS 6.1.0, iPhone, Scale/2.000000)");
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('vine-session-id: '.$key));
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		$result = curl_exec($ch);
+		curl_close($ch);
+		if (!$result){echo curl_error($ch);}
+
+		return $result;
+
+    }
+        private function _postCurl($params = array()) {
+
+    	$url = $params["url"];
+    	$postFields = $params["postFields"];
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
 		curl_setopt($ch, CURLOPT_USERAGENT, "com.vine.iphone/1.0.3 (unknown, iPhone OS 6.1.0, iPhone, Scale/2.000000)");
@@ -45,69 +63,56 @@ Class Vine {
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		$result = curl_exec($ch);
 		curl_close($ch);
+		if (!$result){echo curl_error($ch);}
 
-		if (!$result)
-		{
-		        echo curl_error($ch);
-		}
+		return $result;
+    }
 
+    public function getKey() {
+    	$username = urlencode(self::$username);
+		$password = urlencode(self::$password);
+		$postFields = "username=$username&password=$password"; 
+		$url = $this->_baseURL.'/users/authenticate';
+		$params = array("url" => $url, "postFields" =>$postFields,);
+		$result = $this->_postCurl($params);
 		$json = json_decode($result, true);
 		$key = $json["data"]["key"];
 
 		return $key;
     }
 
-    public function getRecentlyLikedVine() {
-  
-		$key = $this->getKey();
+    public function getLikesOnVineJSON() {
+
+    	$key = $this->getKey();
 		$userId = strtok($key,'-');
-
 		$url = $this->_baseURL.'/timelines/users/'.$userId.'/likes';
+		$params = array("url" => $url, "key" =>$key,);
+		$result = $this->_getCurl($params);
+		$result_pregReplace = preg_replace ('/:\s?(\d{14,})/', ': "${1}"', $result);
+		$json = json_decode($result_pregReplace, true);
 
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_USERAGENT, "com.vine.iphone/1.0.3 (unknown, iPhone OS 6.1.0, iPhone, Scale/2.000000)");
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array('vine-session-id: '.$key));
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		$result = curl_exec($ch);
+		return $json;
+    }
 
+    public function getVinePostJSON($postId) {
 
-		if (!$result)
-		{
-		        echo curl_error($ch);
-		}
-
-		$result2 = preg_replace ('/:\s?(\d{14,})/', ': "${1}"', $result);
-		$json = json_decode($result2, true);
-
-		$postId = $json["data"]["records"][0]["postId"];
-
-
-		$url = $this->_baseURL.'/timelines/posts/'.$postId;
-
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_USERAGENT, "com.vine.iphone/1.0.3 (unknown, iPhone OS 6.1.0, iPhone, Scale/2.000000)");
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array('vine-session-id: '.$key));
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		$result = curl_exec($ch);
-
-		if (!$result)
-		{
-		        echo curl_error($ch);
-		}
-
+    	$key = $this->getKey();
+    	$url = $this->_baseURL.'/timelines/posts/'.$postId;
+		$params = array("url" => $url, "key" =>$key,);
+		$result = $this->_getCurl($params);
 		$json= json_decode($result, true);
 
+		return $json; 
+    }
+
+
+    public function getRecentlyLikedVine() {
+  		
+  		$json = $this->getLikesOnVineJSON();
+		$postId = $json["data"]["records"][0]["postId"];
+		$json = $this->getVinePostJSON($postId);
 		$description= $json["data"]["records"][0]["description"];
 		$video_url= $json["data"]["records"][0]["shareUrl"];
-
-		curl_close($ch);
-
 		$vinedata = array("video_url" => $video_url, "description" =>$description,);
 
 		return $vinedata;
