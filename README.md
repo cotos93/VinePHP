@@ -8,4 +8,4 @@ VinePHP
 		$vine = new Vine('Your Email', 'Password');
 		$vinedata = $vine->getRecentlyLikedVine();
 
-**Note**: Please see Test.php as an example.
+**Note**: Please see test.php as an example.
