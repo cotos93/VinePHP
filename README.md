@@ -10,7 +10,8 @@ VinePHP
 
 **Note**: Please see Test.php as an example.
 
-*Next Up*
+*Next Up*: Building the following functions.
+
 		* Search by Tags
 		* Get Post on Post ID
 		* Easy User Profile Extraction
