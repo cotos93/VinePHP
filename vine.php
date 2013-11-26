@@ -9,8 +9,8 @@
  * @link        http://github.com/ptariche/VinePHP
  * @category    Services
  * @package     Vine
- * @version     0.0.1
- * @todo        Limited Functionality
+ * @version     0.0.3
+ * @todo        Search by Tags, Get Post on Post ID
  */
 
 Class Vine {
@@ -48,10 +48,10 @@ Class Vine {
 		return $result;
 
     }
-        private function _postCurl($params = array()) {
+    private function _postCurl($params = array()) {
 
-    	$url = $params["url"];
-    	$postFields = $params["postFields"];
+		$url = $params["url"];
+		$postFields = $params["postFields"];
 
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
@@ -69,6 +69,7 @@ Class Vine {
     }
 
     public function getKey() {
+
     	$username = urlencode(self::$username);
 		$password = urlencode(self::$password);
 		$postFields = "username=$username&password=$password"; 
@@ -79,6 +80,66 @@ Class Vine {
 		$key = $json["data"]["key"];
 
 		return $key;
+    }
+
+    public function meJSON() {
+
+    	$key = $this->getKey();
+		$userId = strtok($key,'-');
+		$url = $this->_baseURL.'/users/me';
+		$params = array("url" => $url, "key" =>$key,);
+		$result = $this->_getCurl($params);
+		$result_pregReplace = preg_replace ('/:\s?(\d{14,})/', ': "${1}"', $result);
+		$json = json_decode($result_pregReplace, true);
+		// $me = array("username" => $json, "description" =>$description,);
+		return $json;
+    }
+
+    public function me() {
+
+    	$key = $this->getKey();
+		$userId = strtok($key,'-');
+		$url = $this->_baseURL.'/users/me';
+		$params = array("url" => $url, "key" =>$key,);
+		$result = $this->_getCurl($params);
+		$result_pregReplace = preg_replace ('/:\s?(\d{14,})/', ': "${1}"', $result);
+		$json = json_decode($result_pregReplace, true);
+
+		$followerCount= $json["data"]["followerCount"];
+		$userId= $json["data"]["userId"];
+		$likeCount= $json["data"]["likeCount"];
+		$postCount= $json["data"]["postCount"];
+		$avatarUrl= $json["data"]["avatarUrl"];
+		$authoredPostCount= $json["data"]["authoredPostCount"];
+		$phoneNumber= $json["data"]["phoneNumber"];
+		$location= $json["data"]["location"];
+		$email= $json["data"]["email"];
+		$username= $json["data"]["username"];
+		$description= $json["data"]["description"];
+		$followingCount= $json["data"]["followingCount"];
+		$facebookConnected= $json["data"]["facebookConnected"];
+		$twitterConnected= $json["data"]["twitterConnected"];
+		$twitterId= $json["data"]["twitterId"];
+
+		$me = array(
+			"userId" => $userId, 
+			"username" =>$username,
+			"email" =>$email,
+			"phoneNumber" =>$phoneNumber,
+			"location" =>$location,
+			"description" =>$description,
+			"avatarUrl" =>$avatarUrl,
+			"twitterId" =>$twitterId,
+			"followingCount" =>$followingCount,
+			"followerCount" =>$followerCount,
+			"authoredPostCount" =>$authoredPostCount,
+			"likeCount" =>$likeCount,
+			"postCount" =>$postCount,
+			"twitterConnected" =>$twitterConnected,
+			"facebookConnected" =>$facebookConnected,
+			);
+
+		return $me;
     }
 
     public function getLikesOnVineJSON() {
@@ -92,6 +153,17 @@ Class Vine {
 		$json = json_decode($result_pregReplace, true);
 
 		return $json;
+    }
+
+    public function getVinesbyTagJSON($tag) {
+
+    	$key = $this->getKey();
+    	$url = $this->_baseURL.'/timelines/tags/'.$tag;
+		$params = array("url" => $url, "key" =>$key,);
+		$result = $this->_getCurl($params);
+		$json= json_decode($result, true);
+
+		return $json; 
     }
 
     public function getVinePostJSON($postId) {

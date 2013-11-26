@@ -7,6 +7,9 @@ VinePHP
 		require_once('vine.php'); 
 		$vine = new Vine('Your Email', 'Password');
 		$vinedata = $vine->getRecentlyLikedVine();
+        //$me is an array -- pulls your user account information
+        $me = $vine->me();
+
 
 **Note**: Please see Test.php as an example.
 
@@ -14,7 +17,6 @@ VinePHP
 
 		* Search by Tags
 		* Get Post on Post ID
-		* Easy User Profile Extraction
 
 **Note**: Interested in building within this project? Tweet me at @petrosantoni
   
