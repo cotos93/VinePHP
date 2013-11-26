@@ -9,7 +9,7 @@
  * @link        http://github.com/ptariche/VinePHP
  * @category    Services
  * @package     Vine
- * @version     0.0.3
+ * @version     0.0.4
  * @todo        Search by Tags, Get Post on Post ID
  */
 
@@ -91,20 +91,13 @@ Class Vine {
 		$result = $this->_getCurl($params);
 		$result_pregReplace = preg_replace ('/:\s?(\d{14,})/', ': "${1}"', $result);
 		$json = json_decode($result_pregReplace, true);
-		// $me = array("username" => $json, "description" =>$description,);
+
 		return $json;
     }
 
     public function me() {
 
-    	$key = $this->getKey();
-		$userId = strtok($key,'-');
-		$url = $this->_baseURL.'/users/me';
-		$params = array("url" => $url, "key" =>$key,);
-		$result = $this->_getCurl($params);
-		$result_pregReplace = preg_replace ('/:\s?(\d{14,})/', ': "${1}"', $result);
-		$json = json_decode($result_pregReplace, true);
-
+		$json = this->meJSON();
 		$followerCount= $json["data"]["followerCount"];
 		$userId= $json["data"]["userId"];
 		$likeCount= $json["data"]["likeCount"];
