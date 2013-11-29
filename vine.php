@@ -9,7 +9,7 @@
  * @link        http://github.com/ptariche/VinePHP
  * @category    Services
  * @package     Vine
- * @version     0.0.4
+ * @version     0.0.5
  * @todo        Search by Tags, Get Post on Post ID
  */
 
@@ -95,9 +95,44 @@ Class Vine {
 		return $json;
     }
 
+    public function getYourLikesOnVineJSON() {
+
+    	$key = $this->getKey();
+		$userId = strtok($key,'-');
+		$url = $this->_baseURL.'/timelines/users/'.$userId.'/likes';
+		$params = array("url" => $url, "key" =>$key,);
+		$result = $this->_getCurl($params);
+		$result_pregReplace = preg_replace ('/:\s?(\d{14,})/', ': "${1}"', $result);
+		$json = json_decode($result_pregReplace, true);
+
+		return $json;
+    }
+
+    public function getVinesbyTagJSON($tag) {
+
+    	$key = $this->getKey();
+    	$url = $this->_baseURL.'/timelines/tags/'.$tag;
+		$params = array("url" => $url, "key" =>$key,);
+		$result = $this->_getCurl($params);
+		$json= json_decode($result, true);
+
+		return $json; 
+    }
+
+    public function getVinePostJSON($postId) {
+
+    	$key = $this->getKey();
+    	$url = $this->_baseURL.'/timelines/posts/'.$postId;
+		$params = array("url" => $url, "key" =>$key,);
+		$result = $this->_getCurl($params);
+		$json= json_decode($result, true);
+
+		return $json; 
+    }
+
     public function me() {
 
-		$json = this->meJSON();
+		$json = $this->meJSON();
 		$followerCount= $json["data"]["followerCount"];
 		$userId= $json["data"]["userId"];
 		$likeCount= $json["data"]["likeCount"];
@@ -135,47 +170,20 @@ Class Vine {
 		return $me;
     }
 
-    public function getLikesOnVineJSON() {
+    public function YourLikesOnVine() {
+  		
+  		$json = $this->getYourLikesOnVineJSON();
+		$postId = $json["data"]["records"][0]["postId"];
+		$foursquareVenueId = $json["data"]["records"][0]["foursquareVenueId"];
+		$likes = $json["data"]["records"][0]["likes"];
+		$likesOnVine = array();
 
-    	$key = $this->getKey();
-		$userId = strtok($key,'-');
-		$url = $this->_baseURL.'/timelines/users/'.$userId.'/likes';
-		$params = array("url" => $url, "key" =>$key,);
-		$result = $this->_getCurl($params);
-		$result_pregReplace = preg_replace ('/:\s?(\d{14,})/', ': "${1}"', $result);
-		$json = json_decode($result_pregReplace, true);
-
-		return $json;
-    }
-
-    public function getVinesbyTagJSON($tag) {
-
-    	$key = $this->getKey();
-    	$url = $this->_baseURL.'/timelines/tags/'.$tag;
-		$params = array("url" => $url, "key" =>$key,);
-		$result = $this->_getCurl($params);
-		$json= json_decode($result, true);
-
-		return $json; 
-    }
-
-    public function getVinePostJSON($postId) {
-
-    	$key = $this->getKey();
-    	$url = $this->_baseURL.'/timelines/posts/'.$postId;
-		$params = array("url" => $url, "key" =>$key,);
-		$result = $this->_getCurl($params);
-		$json= json_decode($result, true);
-
-		return $json; 
-    }
-
+		return $likesOnVine;
+   }
 
     public function getRecentlyLikedVine() {
   		
-  		$json = $this->getLikesOnVineJSON();
-		$postId = $json["data"]["records"][0]["postId"];
-		$json = $this->getVinePostJSON($postId);
+  		$json = $this->getYourLikesOnVineJSON();
 		$description= $json["data"]["records"][0]["description"];
 		$video_url= $json["data"]["records"][0]["shareUrl"];
 		$vinedata = array("video_url" => $video_url, "description" =>$description,);
